@@ -265,6 +265,25 @@ button, input {
   background: #070707;
 }
 
+/* ccc */
+body.light{
+  --bg:#f3f7fb; --panel:#ffffff; --panel2:#f7fbff; --line:#dbe6f0;
+  --ink:#203449; --ink-dim:#64748b;
+  
+  /* --- MODIFIEZ CES LIGNES POUR DES TRAITS NOIRS FONCÉS --- */
+  --axis:#000000;                                /* Couleur des axes X et Y */
+  --grid-minor:rgba(0, 0, 0, 0.25);              /* Petits carreaux */
+  --grid-major:rgba(0, 0, 0, 0.50);              /* Grands carreaux */
+  --grid-cm:rgba(0, 0, 0, 0.75);                 /* Quadrillage principal / cm */
+  /* ----------------------------------------------------- */
+
+  --accent:#0f766e; --accent2:#2563eb; --accent3:#7c3aed; --accent4:#0ea5e9;
+  --danger:#dc2626; --paper:#f9fcff;
+  --panel-glass:rgba(255,255,255,.96); --overlay-bg:rgba(15,23,42,.18);
+  --btn-bg:rgba(15,23,42,.03); --btn-border:rgba(15,23,42,.08); --btn-hover:rgba(15,23,42,.06);
+  --shadow:0 12px 28px rgba(15,23,42,.08);
+}
+
 @media (max-width: 1120px) {
   .container {
     grid-template-columns: 1fr;

@@ -12,6 +12,7 @@
   </script>
 
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
   <title>BacMath — Traceur de fonctions</title>
 
   <!-- LIGNE À AJOUTER POUR LE LOGO (FAVICON) -->
@@ -19,41 +20,41 @@
 
   <style>
   :root{
-    --bg:#0f141d; --panel:#151b27; --panel2:#1a2232; --line:#2a3446;
-    --ink:#f4f7fb; --ink-dim:#91a0b7; --axis:#99afc4;
-    --grid-minor:rgba(116,144,179,.12); --grid-major:rgba(132,161,201,.20); --grid-cm:rgba(160,188,220,.30);
-    --accent:#f29b4b; --accent2:#ff8a4c; --accent3:#a97cff; --accent4:#53c5ff;
-    --danger:#ff6b7a; --paper:#101721;
-    --panel-glass:rgba(21,27,39,.94); --overlay-bg:rgba(4,8,16,.58);
-    --btn-bg:rgba(255,255,255,.06); --btn-border:rgba(255,255,255,.10); --btn-hover:rgba(255,255,255,.11);
-    --shadow:0 18px 40px rgba(0,0,0,.32);
+    --bg:#08111f; --panel:#0f1729; --panel2:#14233d; --line:#24364f;
+    --ink:#eef4ff; --ink-dim:#94a8c5; --axis:#111111;
+    --grid-minor:rgba(0,0,0,.08); --grid-major:rgba(0,0,0,.14); --grid-cm:rgba(0,0,0,.20);
+    --accent:#f59e0b; --accent2:#ff7a59; --accent3:#7c9cff; --accent4:#2bb9d8;
+    --danger:#ff6b7a; --paper:#0b1220;
+    --panel-glass:rgba(15,23,41,.93); --overlay-bg:rgba(2,6,23,.62);
+    --btn-bg:rgba(255,255,255,.06); --btn-border:rgba(255,255,255,.10); --btn-hover:rgba(255,255,255,.12);
+    --shadow:0 16px 38px rgba(2,6,23,.34);
     --font-display:'Iowan Old Style','Palatino Linotype',Palatino,serif;
     --font-ui:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
     --font-mono:'SF Mono','Cascadia Code',Consolas,monospace;
   }
   body.light{
-    --bg:#f3f7fb; --panel:#ffffff; --panel2:#f7fbff; --line:#dbe6f0;
-    --ink:#203449; --ink-dim:#64748b; --axis:#5b7a9f;
-    --grid-minor:rgba(37,99,235,.05); --grid-major:rgba(37,99,235,.08); --grid-cm:rgba(15,118,110,.10);
+    --bg:#eef4ff; --panel:#f5f8ff; --panel2:#eaf2ff; --line:#d2dff4;
+    --ink:#14213d; --ink-dim:#5c6f90; --axis:#111111;
+    --grid-minor:rgba(30,64,175,.06); --grid-major:rgba(30,64,175,.12); --grid-cm:rgba(14,165,233,.14);
     --accent:#0f766e; --accent2:#2563eb; --accent3:#7c3aed; --accent4:#0ea5e9;
-    --danger:#dc2626; --paper:#f9fcff;
-    --panel-glass:rgba(255,255,255,.96); --overlay-bg:rgba(15,23,42,.18);
-    --btn-bg:rgba(15,23,42,.03); --btn-border:rgba(15,23,42,.08); --btn-hover:rgba(15,23,42,.06);
+    --danger:#dc2626; --paper:#f2f7ff;
+    --panel-glass:rgba(255,255,255,.95); --overlay-bg:rgba(15,23,42,.16);
+    --btn-bg:rgba(15,23,42,.04); --btn-border:rgba(15,23,42,.08); --btn-hover:rgba(15,23,42,.08);
     --shadow:0 12px 28px rgba(15,23,42,.08);
   }
   *{box-sizing:border-box;}
-  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);height:100vh;overflow:hidden;
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font-ui);min-height:100dvh;overflow-x:hidden;overflow-y:auto;
     transition:background .3s ease,color .3s ease;}
-  #app{display:grid;grid-template-columns:1fr 300px;grid-template-rows:70px 1fr;height:100vh;gap:0;}
-  header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:0 22px;background:var(--panel);
-    border-bottom:1px solid var(--line);box-shadow:var(--shadow);position:relative;z-index:120;
+  #app{display:grid;grid-template-columns:minmax(0,1fr) 320px;grid-template-rows:auto 1fr;min-height:100dvh;gap:0;}
+  header{grid-column:1/3;display:flex;align-items:center;gap:14px;padding:14px 16px;background:var(--panel);
+    border-bottom:1px solid var(--line);box-shadow:var(--shadow);position:relative;z-index:120;flex-wrap:wrap;
     transition:background .3s ease,border-color .3s ease;}
   .logo{font-family:var(--font-display);font-size:22px;font-weight:700;letter-spacing:.5px;}
   .logo span{color:var(--accent);}
-  .expr-row{display:flex;align-items:center;gap:8px;flex:1;position:relative;}
+  .expr-row{display:flex;align-items:center;gap:8px;flex:1;min-width:min(100%, 420px);position:relative;}
   .expr-row input[type=text]{
     background:var(--panel2);border:1px solid var(--line);color:var(--ink);
-    font-family:var(--font-mono);font-size:14px;padding:9px 10px;border-radius:8px;width:260px;
+    font-family:var(--font-mono);font-size:14px;padding:9px 10px;border-radius:8px;width:100%;min-width:0;
     transition:background .3s ease,border-color .3s ease,color .3s ease;
   }
   .btn{
@@ -61,9 +62,12 @@
     padding:9px 14px;border-radius:10px;font-size:13px;cursor:pointer;font-family:var(--font-ui);
     transition:transform .15s ease,background .2s ease,border-color .2s ease,color .2s ease;
   }
+  /* softer asymptote button */
+  #asymPlaceBtn{background:rgba(60,120,200,0.06);border-color:rgba(60,120,200,0.12);}
+  #asymPlaceBtn.active-toggle{background:rgba(60,120,200,0.12);border-color:rgba(60,120,200,0.18);}
   .btn:hover{border-color:var(--accent);background:var(--btn-hover);transform:translateY(-1px);}
-  .btn.primary{background:var(--accent);border-color:var(--accent);color:#111;font-weight:700;}
-  .btn.active-toggle{background:var(--accent);color:#111;border-color:var(--accent);}
+  .btn.primary{background:var(--accent4);border-color:var(--accent4);color:#071;font-weight:700;}
+  .btn.active-toggle{background:var(--accent4);color:#071;border-color:var(--accent4);}
   .theme-toggle{margin-left:auto;display:flex;gap:6px;align-items:center;flex-wrap:wrap;}
 
   /* ---- Tiroir Outils : overlay qui se ferme au clic extérieur ---- */
@@ -76,17 +80,17 @@
     z-index:200;box-shadow:var(--shadow);}
   #toolbar.open{transform:translateX(0);}
   #toolbar::-webkit-scrollbar{width:6px;} #toolbar::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px;}
-  .tool-group{border-bottom:1px solid var(--line);padding:8px 0 10px;}
+  .tool-group{border-bottom:1px solid var(--line);padding:12px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;align-items:start;}
   .tool-btn{
-    width:58px;height:58px;margin:8px auto;display:flex;align-items:center;justify-content:center;
-    border-radius:14px;cursor:pointer;color:var(--ink-dim);font-size:18px;position:relative;user-select:none;
-    transition:transform .15s ease,background .15s ease,color .15s ease;
+    width:100%;height:48px;display:flex;align-items:center;justify-content:center;
+    border-radius:10px;cursor:pointer;color:var(--ink-dim);font-size:18px;position:relative;user-select:none;
+    transition:transform .12s ease,background .12s ease,color .12s ease;padding:6px;
   }
   .tool-btn:hover{background:var(--btn-hover);color:var(--ink);}
-  .tool-btn.active{background:var(--accent);color:#111;}
+  .tool-btn.active{background:var(--accent4);color:#071;}
   .tool-btn .tip{
-    position:absolute;left:52px;top:4px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
-    padding:4px 8px;border-radius:5px;font-size:11px;white-space:nowrap;display:none;z-index:250;
+    position:absolute;left:100%;top:6px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);
+    padding:6px 10px;border-radius:6px;font-size:12px;white-space:nowrap;display:none;z-index:250;
   }
   .tool-btn:hover .tip{display:block;}
 
@@ -102,13 +106,13 @@
   #mathKeyboard button:hover{border-color:var(--accent);background:var(--btn-hover);}
 
   #canvasWrap{position:relative;grid-row:2;grid-column:1;overflow:hidden;background:
-    radial-gradient(circle at top left, rgba(15,118,110,.08), transparent 28%),
-    linear-gradient(180deg, var(--paper) 0%, rgba(234,243,251,.92) 100%);
-    box-shadow:inset 0 0 0 1px rgba(255,255,255,.35), var(--shadow);border-radius:18px;margin:14px 10px;
+    radial-gradient(circle at top left, rgba(72,123,197,.12), transparent 28%),
+    linear-gradient(180deg, var(--panel2) 0%, var(--paper) 100%);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.12), var(--shadow);border-radius:18px;margin:14px 10px;min-height:62vh;
     transition:background .3s ease;}
-  canvas{display:block;width:100%;height:100%;border-radius:18px;background:transparent;}
+  canvas{display:block;width:100%;height:100%;border-radius:18px;background:transparent;touch-action:none;}
   #funcList{position:absolute;top:16px;left:16px;background:var(--panel-glass);border:1px solid var(--line);
-    border-radius:14px;padding:12px;max-width:300px;box-shadow:var(--shadow);backdrop-filter:blur(14px);
+    border-radius:14px;padding:12px;max-width:min(300px, calc(100% - 24px));box-shadow:var(--shadow);backdrop-filter:blur(14px);
     transition:background .3s ease,border-color .3s ease;}
   .func-item{display:flex;align-items:center;gap:10px;padding:9px 10px;margin-bottom:6px;background:var(--panel2);
     border:1px solid var(--line);border-radius:12px;font-family:var(--font-mono);font-size:13px;cursor:pointer;
@@ -140,6 +144,30 @@
     padding:12px;margin-top:8px;transition:background .3s ease,border-color .3s ease;box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 8px 18px rgba(0,0,0,.06);}
   .real-table-wrap svg{display:block;min-width:460px;width:100%;}
   .real-table-empty{font-size:11px;color:var(--ink-dim);padding:4px 2px;}
+
+  @media (max-width: 980px){
+    #app{grid-template-columns:1fr;grid-template-rows:auto auto auto;}
+    header{grid-column:1;align-items:flex-start;}
+    .expr-row{width:100%;flex-direction:column;align-items:stretch;min-width:0;}
+    .expr-row input[type=text]{width:100%;}
+    .theme-toggle{margin-left:0;width:100%;justify-content:flex-start;}
+    .theme-toggle .btn{flex:1 1 calc(50% - 6px);min-width:0;}
+    #canvasWrap{grid-row:2;grid-column:1;margin:10px 10px 0;min-height:56vh;}
+    #sidepanel{grid-row:3;grid-column:1;border-left:none;border-top:1px solid var(--line);padding:16px 14px 22px;}
+    #toolbar{width:min(290px,92vw);top:0;bottom:0;padding-top:88px;}
+    #mathKeyboard{width:min(560px,96vw);top:auto;bottom:12px;left:50%;transform:translateX(-50%) translateY(10px);border-radius:14px;grid-template-columns:repeat(3,1fr);max-height:min(72vh,480px);overflow:auto;}
+    #mathKeyboard.open{transform:translateX(-50%) translateY(0);}
+  }
+
+  @media (max-width: 640px){
+    header{padding:12px 12px 14px;}
+    .logo{font-size:20px;}
+    .theme-toggle .btn{flex-basis:100%;}
+    #canvasWrap{min-height:52vh;margin:10px 10px 0;}
+    #funcList{left:10px;top:10px;right:10px;max-width:none;max-height:48vh;overflow:auto;}
+    #sidepanel{padding:14px 12px 20px;}
+    .tool-btn{width:52px;height:52px;}
+  }
 </style>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.js"></script>
 </head>
@@ -150,7 +178,7 @@
     <div class="logo">Bac<span>Math</span></div>
     <div class="expr-row">
       <span style="font-family:var(--font-mono);color:var(--ink-dim);">f(x) =</span>
-      <input type="text" id="exprInput" placeholder="ex: x^2, 1/(x-2), sin(x), sqrt(x)...">
+      <input type="text" id="exprInput" placeholder="ecrit................">
       <button class="btn primary" id="addBtn">Tracer</button>
     </div>
     <span id="modeLabel">Outil : Déplacer</span>
@@ -187,6 +215,7 @@
 
     <h3>Tableau de variation</h3>
     <button class="btn" id="tvBtn" style="width:100%;">Générer le TV</button>
+    <button class="btn" id="clearFuncsBtn" style="width:100%;margin-top:8px;">Supprimer toutes les fonctions</button>
     <div id="tvInfo"></div>
 
     <h3>Concavité</h3>
@@ -420,6 +449,7 @@ let lastMouseScreen = null;
 let hoverPoint = null; // object hovered near the pointer
 let hoveredAsymptote = null;
 let hoveredFuncId = null;
+let activeIntegral = null;
 
 function addFunction(expr){
   try{
@@ -532,9 +562,9 @@ function drawInternal(){
   ctx.fillStyle = css('--ink-dim'); ctx.font='11px '+css('--font-mono');
   ctx.textAlign='center';
   xg = Math.floor(left/step)*step;
-  for(; xg<=right; xg+=step){ if(Math.abs(xg)<1e-9) continue; const p=w2s(xg,0); ctx.fillText(fmtNum(xg), p.sx, o.sy+16); }
+  for(; xg<=right; xg+=step){ if(Math.abs(xg)<1e-9) continue; const p=w2s(xg,0); const dx = Math.abs(p.sx - o.sx); const yOff = dx < 20 ? o.sy+28 : o.sy+16; ctx.fillText(fmtNum(xg), p.sx, yOff); }
   yg = Math.floor(bottom/step)*step;
-  for(; yg<=top; yg+=step){ if(Math.abs(yg)<1e-9) continue; const p=w2s(0,yg); ctx.fillText(fmtNum(yg), o.sx+8, p.sy-4); }
+  for(; yg<=top; yg+=step){ if(Math.abs(yg)<1e-9) continue; const p=w2s(0,yg); const dy = Math.abs(p.sy - o.sy); const xOff = dy < 12 ? o.sx+22 : o.sx+8; ctx.textAlign='start'; ctx.fillText(fmtNum(yg), xOff, p.sy-4); ctx.textAlign='center'; }
   ctx.restore();
 
   ctx.save();
@@ -556,7 +586,7 @@ function drawInternal(){
     if(!f.visible) return;
     ctx.save();
     ctx.strokeStyle = f.color; ctx.lineWidth=2.2; ctx.lineJoin='round'; ctx.lineCap='round';
-    ctx.shadowBlur = 8; ctx.shadowColor = 'rgba(0,0,0,0.22)';
+    ctx.shadowBlur = 6; ctx.shadowColor = 'rgba(0,0,0,0.18)';
     ctx.beginPath();
     let started=false, prevY=null;
     for(let sx=0; sx<=r.width; sx++){
@@ -692,7 +722,7 @@ function fmtNum(n){
 function drawLiveTangent(r){
   if(mode !== 'tangent') return;
   if(!hoverScreen) return;
-  const funcId = hoveredFuncId !== null ? hoveredFuncId : activeFuncId;
+  const funcId = activeFuncId;
   if(funcId===null) return;
   const f = funcs.find(x=>x.id===funcId);
   if(!f || !f.visible) return;
@@ -889,7 +919,8 @@ function getAllAsymptotes(){
   const results = [];
   asymData.vertical.forEach(v=> results.push({type:'vertical', x:v.x, funcId:v.funcId, color:v.color, expr:v.expr, source:'detected'}));
   asymData.horizontal.forEach(h=> results.push({type:'horizontal', y:h.value, funcId:h.funcId, color:h.color, expr:h.expr, source:'detected'}));
-  asymData.oblique.forEach(o=> results.push({type:'oblique', a:o.a, b:o.b, funcId:o.funcId, color:o.color, expr:o.expr, source:'detected'}));
+  // exclude oblique/parabolic asymptotes from automatic overlay per user preference
+  // asymData.oblique.forEach(o=> results.push({type:'oblique', a:o.a, b:o.b, funcId:o.funcId, color:o.color, expr:o.expr, source:'detected'}));
   placedAsymptotes.forEach(item=> results.push({...item, source:'placed'}));
   return results;
 }
@@ -933,12 +964,18 @@ function drawAsymptoteOverlay(r){
     const contact = asymptoteContactPoint(item, r);
     if(item.type==='vertical'){
       ctx.beginPath(); ctx.moveTo(contact.sx,0); ctx.lineTo(contact.sx,r.height); ctx.stroke();
+      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
+      ctx.fillText(`x = ${fmtNum(item.x)}`, contact.sx + 8, 18);
     } else if(item.type==='horizontal'){
       ctx.beginPath(); ctx.moveTo(0,contact.sy); ctx.lineTo(r.width,contact.sy); ctx.stroke();
+      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
+      ctx.fillText(`y = ${fmtNum(item.y)}`, 12, contact.sy - 8);
     } else if(item.type==='oblique'){
       const x1=s2w(0,0).x, x2=s2w(r.width,0).x;
       const p1=w2s(x1, item.a*x1+item.b), p2=w2s(x2, item.a*x2+item.b);
       ctx.beginPath(); ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
+      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
+      ctx.fillText(`y = ${fmtNum(item.a)}x + ${fmtNum(item.b)}`, 12, Math.min(p1.sy,p2.sy) - 8);
     }
     if(contact){
       ctx.fillStyle = css('--paper');
@@ -946,7 +983,6 @@ function drawAsymptoteOverlay(r){
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(contact.sx, contact.sy, 6, 0, Math.PI*2); ctx.fill();
       ctx.stroke();
-      // inner dot for visibility
       ctx.beginPath(); ctx.fillStyle = item.color || css('--accent2'); ctx.arc(contact.sx, contact.sy, 2.5, 0, Math.PI*2); ctx.fill();
     }
   });
@@ -985,6 +1021,7 @@ function buildSignSegments(f, signalFn, DMIN, DMAX, breaksIn){
       prevX=x;
     }
     const xsRaw = [a, ...crits, b];
+    const eps = Math.max(1e-6, (b-a)*1e-6);
     const points = xsRaw.map((x,i)=>{
       let label;
       if(isFirst && i===0) label='−∞';
@@ -992,7 +1029,26 @@ function buildSignSegments(f, signalFn, DMIN, DMAX, breaksIn){
       else if(!isFirst && i===0) label = fmtNum(outer[s])+'⁺';
       else if(!isLast && i===xsRaw.length-1) label = fmtNum(outer[s+1])+'⁻';
       else label = fmtNum(x);
-      return {x, label, y: safeEval(f.fn, x)};
+      // for edge labels, evaluate a limit by sampling slightly inside the interval
+      let y;
+      if(i===0 && isFirst) y = safeEval(f.fn, x + eps);
+      else if(i===xsRaw.length-1 && isLast) y = safeEval(f.fn, x - eps);
+      else y = safeEval(f.fn, x);
+      // if an outer edge, check large magnitude samples to detect divergence to infinity
+      if((i===0 && isFirst) || (i===xsRaw.length-1 && isLast)){
+        try{
+          const checks = [1e3, 1e4, 1e5];
+          let big = null;
+          for(const c of checks){
+            const xt = (i===0 && isFirst) ? -c : c;
+            const yt = safeEval(f.fn, xt);
+            if(!isFinite(yt)) { big = yt; break; }
+            if(Math.abs(yt) > 1e4){ big = yt; break; }
+          }
+          if(big !== null){ y = (big>0 || big===Infinity) ? Infinity : -Infinity; }
+        }catch(e){}
+      }
+      return {x, label, y};
     });
     const signs = [];
     for(let i=0;i<points.length-1;i++){
@@ -1045,8 +1101,7 @@ function generateTV(){
   const DMIN=-15, DMAX=15;
   const breaks = asymData.vertical.map(v=>v.x);
   const segments = buildSignSegments(f, deriv, DMIN, DMAX, breaks);
-  const concSegments = buildSignSegments(f, deriv2, DMIN, DMAX, breaks);
-  const svg = buildVariationSVG(segments, concSegments);
+  const svg = buildVariationSVG(segments, null);
   document.getElementById('tvInfo').innerHTML =
     `<div class="real-table-wrap">${svg}</div>` +
     `<div class="small" style="margin-top:6px;">f(x) = ${f.expr} — domaine étudié : [${DMIN}, ${DMAX}]${breaks.length?', rupture(s) en x = '+breaks.map(fmtNum).join(', '):''}.</div>`;
@@ -1054,7 +1109,7 @@ function generateTV(){
 
 function buildVariationSVG(segments, concSegments){
   const colW=88, gapW=54, padL=64, padR=26;
-  const rowXY=28, ruleY1=44, ruleY2=50, signY=78, ruleY3=100, ruleY4=106, fTop=132, unit=42;
+  const rowXY=28, signY=78, fTop=110, unit=42;
 
   // colonnes à plat + intervalles (signe ou rupture) + niveaux verticaux relatifs
   const cols=[], intervals=[], levels=[];
@@ -1079,6 +1134,7 @@ function buildVariationSVG(segments, concSegments){
   const colX=[padL];
   for(let i=0;i<intervals.length;i++) colX.push(colX[i] + (intervals[i].gap ? gapW : colW));
   const width = colX[colX.length-1] + padR;
+  const ruleY = rowXY + 18;
 
   // try to center the column labeled '0' if present
   let zeroIndex = -1; cols.forEach((c,i)=>{ if(c.label && c.label.toString().trim().startsWith('0')) zeroIndex = i; });
@@ -1088,24 +1144,21 @@ function buildVariationSVG(segments, concSegments){
     const shift = desiredCenter - colX[zeroIndex];
     viewBoxX = -shift;
   }
-  let s = `<svg viewBox="${viewBoxX} 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--danger)';
+  let s = `<svg viewBox="${viewBoxX} 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
+  s += `<line x1="${padL-14}" y1="${ruleY}" x2="${width-padR+14}" y2="${ruleY}" stroke="${stroke}" stroke-width="1"/>`;
 
   // ligne de titres (colonne gauche)
   s += svgTextElement(16, rowXY+4, 'x', {fontSize:12, fill:dim, anchor:'start'});
   s += svgTextElement(16, signY+4, "f'(x)", {fontSize:12, fill:dim, anchor:'start'});
-  const concY = signY + 32;
-  s += svgTextElement(16, concY+4, "f''(x)", {fontSize:12, fill:dim, anchor:'start'});
   s += svgTextElement(16, (fTop+y0f(levels[0]))/2+4, 'f(x)', {fontSize:12, fill:dim, anchor:'start'});
 
-  // double règle horizontale (2 fois : sous x, sous signe)
-  [ruleY1,ruleY2,ruleY3,ruleY4].forEach(y=>{ s += `<line x1="${padL-14}" y1="${y}" x2="${width-padR+14}" y2="${y}" stroke="${stroke}" stroke-width="1"/>`; });
+  // no horizontal separators per user preference — only vertical rupture bars
 
   // valeurs de x
   cols.forEach((c,i)=>{
     s += svgTextElement(colX[i], rowXY, c.label, {fontSize:13, fill:stroke, anchor:'middle'});
-    s += `<line x1="${colX[i]}" y1="${ruleY1-8}" x2="${colX[i]}" y2="${ruleY4}" stroke="${dim}" stroke-width="1" stroke-dasharray="2,2"/>`;
   });
 
   // ligne de signe (f') + zéros aux points critiques (colonnes internes qui ne sont pas des ruptures)
@@ -1113,8 +1166,8 @@ function buildVariationSVG(segments, concSegments){
     const xL=colX[i], xR=colX[i+1], xm=(xL+xR)/2;
     if(iv.gap){
       // double vertical rupture bar (thicker, spans full area)
-      s += `<line x1="${xm-6}" y1="${ruleY1-6}" x2="${xm-6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
-      s += `<line x1="${xm+6}" y1="${ruleY1-6}" x2="${xm+6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
+      s += `<line x1="${xm-6}" y1="${ruleY+2}" x2="${xm-6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
+      s += `<line x1="${xm+6}" y1="${ruleY+2}" x2="${xm+6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
     } else {
       // short colored stroke representing sign of f'
       const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
@@ -1129,30 +1182,7 @@ function buildVariationSVG(segments, concSegments){
     }
   });
 
-  // concavity row rendering (use concSegments to compute signs per interval)
-  if(concSegments && concSegments.length){
-    // build a flat intervals array analogous to above for concSegments
-    const concCols=[], concIntervals=[];
-    concSegments.forEach((seg,si)=>{
-      seg.points.forEach((p,pi)=>{ if(pi>0) concIntervals.push({sign:seg.signs[pi-1]}); concCols.push(p); });
-      if(si < concSegments.length-1) concIntervals.push({gap:true});
-    });
-    // draw concavity symbols under sign row
-    concIntervals.forEach((iv,i)=>{
-      const xL=colX[i], xR=colX[i+1], xm=(xL+xR)/2;
-      if(iv.gap){
-        // draw vertical double line for rupture
-        s += `<line x1="${xm-3}" y1="${ruleY2+6}" x2="${xm-3}" y2="${fTop+range*unit+10}" stroke="${stroke}" stroke-width="1.6"/>`;
-        s += `<line x1="${xm+3}" y1="${ruleY2+6}" x2="${xm+3}" y2="${fTop+range*unit+10}" stroke="${stroke}" stroke-width="1.6"/>`;
-      } else {
-        const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
-        const shapeY = concY + 22;
-        const w = Math.min(colW*0.6, 44), h = 12, cx = xm, cy = shapeY;
-        if(iv.sign==='+') s += `<path d="M ${cx-w/2} ${cy-h/2} Q ${cx} ${cy+h*1.1} ${cx+w/2} ${cy-h/2}" stroke="${up}" stroke-width="2" fill="none"/>`;
-        else if(iv.sign==='−') s += `<path d="M ${cx-w/2} ${cy+h/2} Q ${cx} ${cy-h*1.1} ${cx+w/2} ${cy+h/2}" stroke="${down}" stroke-width="2" fill="none"/>`;
-      }
-    });
-  }
+  // concavity row removed per user request
 
   // courbe de variation (flèches obliques) + valeurs
   cols.forEach((c,i)=>{
@@ -1165,7 +1195,7 @@ function buildVariationSVG(segments, concSegments){
     }
     const above = (i>0 ? levels[i]<=levels[i-1] : (i<cols.length-1 && levels[i]<=levels[i+1]));
     const labelY = above ? cy-9 : cy+16;
-    s += svgTextElement(colX[i], labelY, fmtValueLabel(c.y), {fontSize:12, fill: isEdge? '#ffffff': stroke, anchor:'middle'});
+    s += svgTextElement(colX[i], labelY, fmtValueLabel(c.y), {fontSize:12, fill: stroke, anchor:'middle'});
   });
   for(let i=0;i<intervals.length;i++){
     if(intervals[i].gap) continue;
@@ -1208,7 +1238,7 @@ function analyzeConcavity(){
 
 function buildConcavitySVG(segments){
   const colW=104, gapW=70, padL=86, padR=26;
-  const rowXY=30, ruleY1=48, ruleY2=54, signY=86, shapeY=118, svgH=160;
+  const rowXY=30, ruleY=54, signY=86, shapeY=118, svgH=160;
 
   const cols=[], intervals=[];
   segments.forEach((seg,si)=>{
@@ -1225,7 +1255,7 @@ function buildConcavitySVG(segments){
   s += `<text x="16" y="${rowXY+4}" font-size="12" fill="${dim}">x</text>`;
   s += `<text x="16" y="${signY+4}" font-size="12" fill="${dim}">f''(x)</text>`;
   s += `<text x="16" y="${shapeY+4}" font-size="12" fill="${dim}">Concavité</text>`;
-  [ruleY1,ruleY2].forEach(y=>{ s += `<line x1="${padL-14}" y1="${y}" x2="${width-padR+14}" y2="${y}" stroke="${stroke}" stroke-width="1"/>`; });
+  s += `<line x1="${padL-14}" y1="${ruleY}" x2="${width-padR+14}" y2="${ruleY}" stroke="${stroke}" stroke-width="1"/>`;
 
   cols.forEach((c,i)=>{
     s += `<text x="${colX[i]}" y="${rowXY}" font-size="13" fill="${stroke}" text-anchor="middle" font-weight="600">${c.label}</text>`;
@@ -1233,8 +1263,8 @@ function buildConcavitySVG(segments){
   intervals.forEach((iv,i)=>{
     const xL=colX[i], xR=colX[i+1], xm=(xL+xR)/2;
     if(iv.gap){
-      s += `<line x1="${xm-3}" y1="${ruleY2+6}" x2="${xm-3}" y2="${svgH-8}" stroke="${stroke}" stroke-width="1.6"/>`;
-      s += `<line x1="${xm+3}" y1="${ruleY2+6}" x2="${xm+3}" y2="${svgH-8}" stroke="${stroke}" stroke-width="1.6"/>`;
+      s += `<line x1="${xm-3}" y1="${ruleY+6}" x2="${xm-3}" y2="${svgH-8}" stroke="${stroke}" stroke-width="1.6"/>`;
+      s += `<line x1="${xm+3}" y1="${ruleY+6}" x2="${xm+3}" y2="${svgH-8}" stroke="${stroke}" stroke-width="1.6"/>`;
       return;
     }
     const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
@@ -1597,8 +1627,10 @@ cv.addEventListener('click', e=>{
       placed = {type:'horizontal', y: Math.round(fy*1000)/1000, funcId:f.id, color:f.color, expr:f.expr};
       showToast(`Asymptote horizontale ajoutée y=${placed.y}`);
     } else {
-      placed = {type:'oblique', a: Math.round(m*1000)/1000, b: Math.round((fy - m*x)*1000)/1000, funcId:f.id, color:f.color, expr:f.expr};
-      showToast(`Asymptote oblique ajoutée y=${placed.a}x+${placed.b}`);
+      // Oblique asymptotes are disabled by user preference.
+      showToast('Aucune asymptote verticale/horizontale détectée à cet endroit (oblique non ajoutée).');
+      draw();
+      return;
     }
     placedAsymptotes.push(placed);
     mode='pan'; document.getElementById('modeLabel').textContent='Outil : Déplacer';
@@ -1846,10 +1878,81 @@ document.addEventListener('click', (e)=>{
 });
 document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeDrawers(); });
 
-document.getElementById('asymPlaceBtn').onclick = ()=>{
-  mode = 'place-asym';
-  document.getElementById('modeLabel').textContent = 'Outil : Placer la tangente';
-  showToast('Cliquez sur le graphe pour poser une tangente.');
+function placeAutoAsymptotes(){
+  const f = funcs.find(x=>x.id===activeFuncId);
+  if(!f){ showToast('Sélectionnez une fonction pour placer ses asymptotes.'); return; }
+
+  const next = [];
+  const DMIN=-40, DMAX=40, N=4000, step=(DMAX-DMIN)/N;
+  let prev = safeEval(f.fn, DMIN);
+  for(let i=1;i<=N;i++){
+    const x = DMIN + i*step;
+    const y = safeEval(f.fn, x);
+    if(isFinite(prev) && (!isFinite(y) || Math.abs(y) > 1e4)){
+      let a = x - step, b = x;
+      for(let k=0;k<24;k++){
+        const mid = (a+b)/2;
+        const ym = safeEval(f.fn, mid);
+        if(isFinite(ym) && Math.abs(ym) <= 1e5) a = mid; else b = mid;
+      }
+      const loc = Math.round(((a+b)/2)*1000)/1000;
+      if(!next.some(item=>item.type==='vertical' && Math.abs(item.x-loc) < 0.05)) next.push({type:'vertical', x:loc, funcId:f.id, color:f.color, expr:f.expr});
+    }
+    prev = y;
+  }
+
+  const horizontalCandidates = [];
+  [1e5, -1e5].forEach(sign=>{
+    const y = safeEval(f.fn, sign);
+    if(isFinite(y) && Math.abs(y) < 1e6) horizontalCandidates.push(Math.round(y*1000)/1000);
+  });
+  horizontalCandidates.forEach(y=>{
+    if(!next.some(item=>item.type==='horizontal' && Math.abs(item.y-y) < 1e-6)) next.push({type:'horizontal', y, funcId:f.id, color:f.color, expr:f.expr});
+  });
+
+  placedAsymptotes = placedAsymptotes.filter(item => !(item.funcId===f.id && (item.type==='vertical' || item.type==='horizontal')));
+  placedAsymptotes.push(...next);
+
+  asymOverlayEnabled = true;
+  mode = 'pan';
+  document.getElementById('modeLabel').textContent = 'Outil : Déplacer';
+  if(next.length){
+    showToast(`Asymptotes placées : ${next.map(item=>item.type==='vertical' ? `x=${fmtNum(item.x)}` : `y=${fmtNum(item.y)}`).join(' · ')}`);
+  } else {
+    showToast('Aucune asymptote horizontale ou verticale détectée pour cette fonction.');
+  }
+  draw();
+}
+
+function toggleAsymPlaceMode(){
+  const btn = document.getElementById('asymPlaceBtn');
+  if(asymOverlayEnabled){
+    asymOverlayEnabled = false;
+    btn.classList.remove('active-toggle');
+    document.getElementById('modeLabel').textContent = 'Outil : Déplacer';
+    showToast('Asymptotes masquées');
+    draw();
+    return;
+  }
+  btn.classList.add('active-toggle');
+  placeAutoAsymptotes();
+}
+
+document.getElementById('asymPlaceBtn').onclick = toggleAsymPlaceMode;
+
+document.getElementById('clearFuncsBtn').onclick = ()=>{
+  funcs = [];
+  activeFuncId = null;
+  placedAsymptotes = [];
+  asymOverlayEnabled = false;
+  document.getElementById('asymBtn')?.classList.remove('active-toggle');
+  document.getElementById('asymPlaceBtn')?.classList.remove('active-toggle');
+  document.getElementById('tvInfo').innerHTML = '';
+  document.getElementById('concInfo').innerHTML = '';
+  document.getElementById('asymInfo').innerHTML = '';
+  renderFuncList();
+  showToast('Toutes les fonctions ont été supprimées');
+  draw();
 };
 
 document.getElementById('inflBtn').onclick = ()=>{
