@@ -21,10 +21,10 @@
   <style>
   :root{
     --bg:#08111f; --panel:#0f1729; --panel2:#14233d; --line:#24364f;
-    --ink:#eef4ff; --ink-dim:#94a8c5; --axis:#111111;
-    --grid-minor:rgba(0,0,0,.08); --grid-major:rgba(0,0,0,.14); --grid-cm:rgba(0,0,0,.20);
+    --ink:#eef4ff; --ink-dim:#94a8c5; --axis:#eef4ff;
+    --grid-minor:rgba(255,255,255,.08); --grid-major:rgba(255,255,255,.14); --grid-cm:rgba(255,255,255,.20);
     --accent:#f59e0b; --accent2:#ff7a59; --accent3:#7c9cff; --accent4:#2bb9d8;
-    --danger:#ff6b7a; --paper:#0b1220;
+    --danger:#ff6b7a; --asymptote:#c53030; --danger-light:#ffb3b8; --paper:#0b1220;
     --panel-glass:rgba(15,23,41,.93); --overlay-bg:rgba(2,6,23,.62);
     --btn-bg:rgba(255,255,255,.06); --btn-border:rgba(255,255,255,.10); --btn-hover:rgba(255,255,255,.12);
     --shadow:0 16px 38px rgba(2,6,23,.34);
@@ -35,7 +35,7 @@
   body.light{
     --bg:#eef4ff; --panel:#f5f8ff; --panel2:#eaf2ff; --line:#d2dff4;
     --ink:#14213d; --ink-dim:#5c6f90; --axis:#111111;
-    --grid-minor:rgba(30,64,175,.06); --grid-major:rgba(30,64,175,.12); --grid-cm:rgba(14,165,233,.14);
+    --grid-minor:rgba(0,0,0,.08); --grid-major:rgba(0,0,0,.14); --grid-cm:rgba(0,0,0,.20);
     --accent:#0f766e; --accent2:#2563eb; --accent3:#7c3aed; --accent4:#0ea5e9;
     --danger:#dc2626; --paper:#f2f7ff;
     --panel-glass:rgba(255,255,255,.95); --overlay-bg:rgba(15,23,42,.16);
@@ -159,6 +159,18 @@
     #mathKeyboard.open{transform:translateX(-50%) translateY(0);}
   }
 
+  /* Calculatrice scientifique modal */
+  #sciCalc .calc-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.36);z-index:380}
+  #sciCalc .calc-modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:390;padding:14px;border-radius:12px;background:var(--panel);border:1px solid var(--line);width:min(680px,94vw);box-shadow:var(--shadow);}
+  #sciCalc .calc-head{display:flex;align-items:center;gap:10px}
+  #sciCalc .calc-buttons button{padding:8px;font-family:var(--font-mono);border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink)}
+  #sciCalc .calc-buttons button:hover{background:var(--btn-hover)}
+
+  /* Help modal tweaks */
+  #helpModal a.btn{margin-left:6px}
+  .tool-btn .help-dot{position:absolute;right:6px;bottom:6px;width:18px;height:18px;border-radius:6px;background:rgba(255,255,255,0.03);color:var(--ink-dim);display:flex;align-items:center;justify-content:center;font-size:11px;border:1px solid var(--line);cursor:pointer}
+  .tool-btn .help-dot:hover{background:var(--btn-hover);color:var(--ink)}
+
   @media (max-width: 640px){
     header{padding:12px 12px 14px;}
     .logo{font-size:20px;}
@@ -191,11 +203,33 @@
       <button class="btn" id="resetView">⤢ Recentrer</button>
       <button class="btn" id="themeBtn">🌙 Sombre</button>
       <button class="btn" id="keyboardBtn">⌨ Clavier</button>
+      <button class="btn" id="calcBtn">🧮 Calculatrice</button>
     </div>
   </header>
 
   <div id="toolbar"></div>
   <div id="mathKeyboard"></div>
+  <div id="sciCalc" style="display:none;">
+    <div class="calc-backdrop" id="calcBackdrop"></div>
+    <div class="calc-modal" id="calcModal">
+      <div class="calc-head"><strong>Calculatrice scientifique</strong><button class="btn" id="closeCalc" style="margin-left:8px;">Fermer</button></div>
+      <input id="calcDisplay" type="text" style="width:100%;padding:10px;margin-top:8px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--ink);font-family:var(--font-mono);font-size:16px;" placeholder="Entrez une expression, ex: sin(pi/2) + ln(2)">
+      <div class="calc-buttons" id="calcButtons" style="margin-top:8px;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;"></div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn primary" id="calcEval">Calculer</button>
+        <button class="btn" id="calcClear">Effacer</button>
+        <button class="btn" id="calcInsertExpr">Insérer dans f(x)</button>
+      </div>
+      <div id="calcHistory" style="margin-top:10px;max-height:140px;overflow:auto;font-size:13px;color:var(--ink-dim);"></div>
+    </div>
+  </div>
+
+  <!-- Help modal for tools (video / steps link) -->
+  <div id="helpModal" style="display:none;position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:400;padding:18px;border-radius:12px;background:var(--panel);border:1px solid var(--line);width:min(820px,92vw);box-shadow:var(--shadow);">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;"><strong id="helpTitle">Aide outil</strong><button class="btn" id="helpClose">Fermer</button></div>
+    <div id="helpBody" style="margin-top:10px;color:var(--ink-dim);font-size:13px;">Chargement...</div>
+    <div style="margin-top:12px;"><a id="helpVideoLink" href="#" target="_blank" class="btn">Voir une démonstration (YouTube)</a></div>
+  </div>
 
   <div id="canvasWrap">
     <canvas id="cv"></canvas>
@@ -208,7 +242,7 @@
     <div id="cursorInfo" class="small">Survolez une courbe pour voir la tangente s'afficher en temps réel.</div>
 
     <h3>Comportement asymptotique</h3>
-    <button class="btn" id="asymBtn" style="width:100%;">Analyser les tangentes</button>
+    <button class="btn" id="asymBtn" style="width:100%;">Analyser les asymptotes</button>
     <div id="asymInfo" class="small" style="margin-top:6px;"></div>
     <button class="btn" id="recalcIntersections" style="width:100%;margin-top:8px;">Recalculer intersections</button>
     <div id="interInfo" class="small" style="margin-top:6px;"></div>
@@ -611,9 +645,8 @@ function drawInternal(){
   // integral overlay (if any)
   if(activeIntegral) drawIntegralOverlay(r);
 
-  // asymptotes overlay
+  // asymptotes overlay (horizontales/verticales uniquement)
   drawAsymptoteOverlay(r);
-  drawTangentOverlay(r);
 
   // live tangent (fluid, following cursor)
   drawLiveTangent(r);
@@ -740,13 +773,14 @@ function drawLiveTangent(r){
   ctx.restore();
   const pm = w2s(wx,y);
   ctx.save();
-  ctx.fillStyle = css('--accent2'); ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2;
+  ctx.fillStyle = css('--accent2'); ctx.strokeStyle = css('--paper'); ctx.lineWidth = 2;
   ctx.beginPath(); ctx.arc(pm.sx,pm.sy,5.5,0,Math.PI*2); ctx.fill(); ctx.stroke();
   ctx.restore();
   const eq = `y = ${fmtNum(m)}(x - ${fmtNum(wx)}) + ${fmtNum(y)}`;
   const labelY = Math.min(r.height-24, Math.max(24, pm.sy-16));
   ctx.save();
-  ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.strokeStyle = 'rgba(0,0,0,0.1)'; ctx.lineWidth = 1;
+  ctx.fillStyle = css('--panel2'); ctx.strokeStyle = css('--line'); ctx.lineWidth = 1;
+  ctx.shadowBlur = 10; ctx.shadowColor = 'rgba(0,0,0,0.25)';
   ctx.beginPath(); ctx.roundRect(pm.sx+8, labelY-16, 220, 30, 8); ctx.fill(); ctx.stroke();
   ctx.restore();
   ctx.fillStyle = css('--ink'); ctx.font='12px '+css('--font-mono'); ctx.fillText(eq, pm.sx+18, labelY+2);
@@ -932,58 +966,38 @@ function asymptoteContactPoint(item, r){
   return w2s(centerX, item.a*centerX + item.b);
 }
 
-function drawTangentOverlay(r){
-  if(!asymOverlayEnabled) return;
-  ctx.save();
-  ctx.strokeStyle = css('--accent4'); ctx.lineWidth = 1.1; ctx.setLineDash([5,6]);
-  const xMin = s2w(0,0).x, xMax = s2w(r.width,0).x;
-  const sampleCount = 24;
-  const dx = (xMax - xMin)/(sampleCount - 1);
-  funcs.filter(f=>f.visible).forEach(f=>{
-    for(let i=0;i<sampleCount;i++){
-      const wx = xMin + dx*i;
-      const y = safeEval(f.fn, wx);
-      if(!isFinite(y)) continue;
-      const m = deriv(f.fn, wx);
-      if(!isFinite(m)) continue;
-      const y1 = y + m*(xMin - wx);
-      const y2 = y + m*(xMax - wx);
-      const p1 = w2s(xMin, y1), p2 = w2s(xMax, y2);
-      ctx.beginPath(); ctx.moveTo(p1.sx, p1.sy); ctx.lineTo(p2.sx, p2.sy); ctx.stroke();
-    }
-  });
-  ctx.restore();
-}
-
 function drawAsymptoteOverlay(r){
   if(!asymOverlayEnabled) return;
   ctx.save();
-  ctx.setLineDash([4,4]); ctx.lineWidth=1.4;
+  ctx.setLineDash([4,4]); ctx.lineWidth=1.6;
   getAllAsymptotes().forEach(item=>{
-    ctx.strokeStyle = item.color || (item.source==='placed' ? css('--accent2') : css('--accent3'));
+    const asymColor = css('--asymptote');
+    ctx.strokeStyle = asymColor;
     const contact = asymptoteContactPoint(item, r);
     if(item.type==='vertical'){
-      ctx.beginPath(); ctx.moveTo(contact.sx,0); ctx.lineTo(contact.sx,r.height); ctx.stroke();
-      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
-      ctx.fillText(`x = ${fmtNum(item.x)}`, contact.sx + 8, 18);
+      ctx.beginPath(); ctx.moveTo(contact.sx,0); ctx.lineTo(contact.sx,r.height); ctx.lineWidth = 3.6; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(contact.sx+5,0); ctx.lineTo(contact.sx+5,r.height); ctx.lineWidth = 3.6; ctx.stroke();
+      ctx.fillStyle = asymColor; ctx.font = '12px ' + css('--font-mono');
+      ctx.fillText(`x = ${fmtNum(item.x)}`, contact.sx + 10, 18);
     } else if(item.type==='horizontal'){
       ctx.beginPath(); ctx.moveTo(0,contact.sy); ctx.lineTo(r.width,contact.sy); ctx.stroke();
-      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
+      ctx.beginPath(); ctx.moveTo(0,contact.sy+4); ctx.lineTo(r.width,contact.sy+4); ctx.stroke();
+      ctx.fillStyle = asymColor; ctx.font = '11px ' + css('--font-mono');
       ctx.fillText(`y = ${fmtNum(item.y)}`, 12, contact.sy - 8);
     } else if(item.type==='oblique'){
       const x1=s2w(0,0).x, x2=s2w(r.width,0).x;
       const p1=w2s(x1, item.a*x1+item.b), p2=w2s(x2, item.a*x2+item.b);
       ctx.beginPath(); ctx.moveTo(p1.sx,p1.sy); ctx.lineTo(p2.sx,p2.sy); ctx.stroke();
-      ctx.fillStyle = css('--ink'); ctx.font = '11px ' + css('--font-mono');
+      ctx.fillStyle = asymColor; ctx.font = '11px ' + css('--font-mono');
       ctx.fillText(`y = ${fmtNum(item.a)}x + ${fmtNum(item.b)}`, 12, Math.min(p1.sy,p2.sy) - 8);
     }
     if(contact){
       ctx.fillStyle = css('--paper');
-      ctx.strokeStyle = item.color || css('--accent2');
+      ctx.strokeStyle = asymColor;
       ctx.lineWidth = 2;
       ctx.beginPath(); ctx.arc(contact.sx, contact.sy, 6, 0, Math.PI*2); ctx.fill();
       ctx.stroke();
-      ctx.beginPath(); ctx.fillStyle = item.color || css('--accent2'); ctx.arc(contact.sx, contact.sy, 2.5, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.fillStyle = asymColor; ctx.arc(contact.sx, contact.sy, 2.5, 0, Math.PI*2); ctx.fill();
     }
   });
   ctx.restore();
@@ -1034,7 +1048,7 @@ function buildSignSegments(f, signalFn, DMIN, DMAX, breaksIn){
       if(i===0 && isFirst) y = safeEval(f.fn, x + eps);
       else if(i===xsRaw.length-1 && isLast) y = safeEval(f.fn, x - eps);
       else y = safeEval(f.fn, x);
-      // if an outer edge, check large magnitude samples to detect divergence to infinity
+      // bord du domaine d'étude (−∞ / +∞) : on sonde loin pour détecter une vraie divergence
       if((i===0 && isFirst) || (i===xsRaw.length-1 && isLast)){
         try{
           const checks = [1e3, 1e4, 1e5];
@@ -1047,6 +1061,22 @@ function buildSignSegments(f, signalFn, DMIN, DMAX, breaksIn){
           }
           if(big !== null){ y = (big>0 || big===Infinity) ? Infinity : -Infinity; }
         }catch(e){}
+      }
+      // bord interne collé à une rupture (asymptote verticale déjà détectée) : la limite
+      // est TOUJOURS ±∞ de ce côté — on sonde de plus en plus près du point pour fiabiliser
+      // le signe plutôt que d'afficher une grande valeur numérique approximative.
+      const isInternalBreakEdge = (i===0 && !isFirst) || (i===xsRaw.length-1 && !isLast);
+      if(isInternalBreakEdge){
+        const dir = (i===0) ? 1 : -1; // on avance vers l'intérieur du segment
+        let sign = null;
+        for(const e of [eps, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7]){
+          const xt = x + dir*e;
+          const yt = safeEval(f.fn, xt);
+          if(!isFinite(yt)){ continue; }
+          if(Math.abs(yt) > 1){ sign = yt>0 ? 1 : -1; break; }
+        }
+        if(sign===null && isFinite(y)) sign = y>=0 ? 1 : -1;
+        y = sign===-1 ? -Infinity : Infinity;
       }
       return {x, label, y};
     });
@@ -1062,7 +1092,9 @@ function buildSignSegments(f, signalFn, DMIN, DMAX, breaksIn){
 }
 
 function fmtValueLabel(y){
-  if(!isFinite(y)) return '∄';
+  if(y === Infinity) return '+∞';
+  if(y === -Infinity) return '−∞';
+  if(isNaN(y)) return '∄';
   if(Math.abs(y) > 1e4) return y>0 ? '+∞' : '−∞';
   return fmtNum(y);
 }
@@ -1098,16 +1130,21 @@ function svgTextElement(x,y,txt,opts={fontSize:13,fill:'var(--ink)',anchor:'midd
 function generateTV(){
   const f = funcs.find(x=>x.id===activeFuncId);
   if(!f){ showToast('Sélectionnez une fonction dans la liste en haut à gauche'); return; }
-  const DMIN=-15, DMAX=15;
+  // for trigonometric functions prefer the principal period
+  const isTrig = /\b(sin|cos|tan|asin|acos|atan)\b/i.test(f.expr);
+  const DMIN = isTrig ? -Math.PI : -15;
+  const DMAX = isTrig ? Math.PI : 15;
   const breaks = asymData.vertical.map(v=>v.x);
   const segments = buildSignSegments(f, deriv, DMIN, DMAX, breaks);
-  const svg = buildVariationSVG(segments, null);
+  // find horizontales for this function and pass to renderer
+  const horiz = asymData.horizontal.filter(h=>h.funcId===f.id).map(h=>h.value);
+  const svg = buildVariationSVG(segments, horiz);
   document.getElementById('tvInfo').innerHTML =
     `<div class="real-table-wrap">${svg}</div>` +
     `<div class="small" style="margin-top:6px;">f(x) = ${f.expr} — domaine étudié : [${DMIN}, ${DMAX}]${breaks.length?', rupture(s) en x = '+breaks.map(fmtNum).join(', '):''}.</div>`;
 }
 
-function buildVariationSVG(segments, concSegments){
+function buildVariationSVG(segments, asymHoriz=[]){
   const colW=88, gapW=54, padL=64, padR=26;
   const rowXY=28, signY=78, fTop=110, unit=42;
 
@@ -1144,9 +1181,15 @@ function buildVariationSVG(segments, concSegments){
     const shift = desiredCenter - colX[zeroIndex];
     viewBoxX = -shift;
   }
-  const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--danger)';
+  const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--asymptote)';
   let s = `<svg viewBox="${viewBoxX} 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
+  // bandes de fond colorées derrière chaque intervalle de signe (croissant/décroissant)
+  intervals.forEach((iv,i)=>{
+    if(iv.gap) return;
+    const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
+    s += `<rect x="${colX[i]}" y="${ruleY+2}" width="${colX[i+1]-colX[i]}" height="${fTop+range*unit+12-(ruleY+2)}" fill="${col}" opacity="0.07"/>`;
+  });
   s += `<line x1="${padL-14}" y1="${ruleY}" x2="${width-padR+14}" y2="${ruleY}" stroke="${stroke}" stroke-width="1"/>`;
 
   // ligne de titres (colonne gauche)
@@ -1165,9 +1208,9 @@ function buildVariationSVG(segments, concSegments){
   intervals.forEach((iv,i)=>{
     const xL=colX[i], xR=colX[i+1], xm=(xL+xR)/2;
     if(iv.gap){
-      // double vertical rupture bar (thicker, spans full area)
-      s += `<line x1="${xm-6}" y1="${ruleY+2}" x2="${xm-6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
-      s += `<line x1="${xm+6}" y1="${ruleY+2}" x2="${xm+6}" y2="${fTop+range*unit+14}" stroke="${stroke}" stroke-width="2.2"/>`;
+      // double vertical asymptote marker (light red) for each rupture
+      s += `<line x1="${xm-6}" y1="${ruleY+2}" x2="${xm-6}" y2="${fTop+range*unit+14}" stroke="${down}" stroke-width="2.8" stroke-linecap="round"/>`;
+      s += `<line x1="${xm+6}" y1="${ruleY+2}" x2="${xm+6}" y2="${fTop+range*unit+14}" stroke="${down}" stroke-width="2.8" stroke-linecap="round"/>`;
     } else {
       // short colored stroke representing sign of f'
       const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
@@ -1195,7 +1238,9 @@ function buildVariationSVG(segments, concSegments){
     }
     const above = (i>0 ? levels[i]<=levels[i-1] : (i<cols.length-1 && levels[i]<=levels[i+1]));
     const labelY = above ? cy-9 : cy+16;
-    s += svgTextElement(colX[i], labelY, fmtValueLabel(c.y), {fontSize:12, fill: stroke, anchor:'middle'});
+    const valLabel = fmtValueLabel(c.y);
+    const isInf = valLabel==='+∞' || valLabel==='−∞';
+    s += `<text x="${colX[i]}" y="${labelY}" font-size="${isInf?14:12}" font-weight="${isInf?700:400}" fill="${isInf?dim:stroke}" text-anchor="middle">${valLabel}</text>`;
   });
   for(let i=0;i<intervals.length;i++){
     if(intervals[i].gap) continue;
@@ -1210,6 +1255,19 @@ function buildVariationSVG(segments, concSegments){
     s += `<polygon points="${ax1},${ay1} ${ax2},${ay2} ${ax3},${ay3}" fill="${up}"/>`;
   }
   s += '</svg>';
+  // If there are horizontal asymptotes for this function, add parallel horizontal markers
+  if(Array.isArray(asymHoriz) && asymHoriz.length){
+    // insert additional small SVG overlay lines near the f(x) band with labels
+    const extra = [];
+    asymHoriz.forEach((yv, idx)=>{
+      const py = fTop + 8 + (idx * 12);
+      extra.push(`<line x1="8" y1="${py}" x2="${width-8}" y2="${py}" stroke="var(--accent3)" stroke-width="2" stroke-dasharray="6 4"/>`);
+      extra.push(`<line x1="8" y1="${py+6}" x2="${width-8}" y2="${py+6}" stroke="var(--accent3)" stroke-width="2" stroke-dasharray="6 4"/>`);
+      extra.push(`<text x="${width-8}" y="${py-2}" font-size="12" fill="var(--ink)" text-anchor="end">y = ${fmtNum(yv)} (asymptote)</text>`);
+    });
+    // inject before closing svg tag
+    s = s.replace('</svg>', extra.join('') + '</svg>');
+  }
   return s;
 }
 
@@ -1217,7 +1275,9 @@ function buildVariationSVG(segments, concSegments){
 function analyzeConcavity(){
   const f = funcs.find(x=>x.id===activeFuncId);
   if(!f){ showToast('Sélectionnez une fonction dans la liste en haut à gauche'); return; }
-  const DMIN=-15, DMAX=15;
+  const isTrig = /\b(sin|cos|tan|asin|acos|atan)\b/i.test(f.expr);
+  const DMIN = isTrig ? -Math.PI : -15;
+  const DMAX = isTrig ? Math.PI : 15;
   const breaks = asymData.vertical.map(v=>v.x);
   const segments = buildSignSegments(f, deriv2, DMIN, DMAX, breaks);
 
@@ -1252,6 +1312,12 @@ function buildConcavitySVG(segments){
   const stroke='var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--danger)';
   let s = `<svg viewBox="0 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
+  // bandes de fond colorées (convexe / concave)
+  intervals.forEach((iv,i)=>{
+    if(iv.gap) return;
+    const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
+    s += `<rect x="${colX[i]}" y="${ruleY+2}" width="${colX[i+1]-colX[i]}" height="${svgH-(ruleY+2)-6}" fill="${col}" opacity="0.07"/>`;
+  });
   s += `<text x="16" y="${rowXY+4}" font-size="12" fill="${dim}">x</text>`;
   s += `<text x="16" y="${signY+4}" font-size="12" fill="${dim}">f''(x)</text>`;
   s += `<text x="16" y="${shapeY+4}" font-size="12" fill="${dim}">Concavité</text>`;
@@ -1271,8 +1337,8 @@ function buildConcavitySVG(segments){
     s += `<text x="${xm}" y="${signY}" font-size="15" fill="${col}" text-anchor="middle" font-weight="700">${iv.sign}</text>`;
     // forme ∪ (convexe, f''>0) ou ∩ (concave, f''<0)
     const w=colW*0.6, h=16, cx=xm, cy=shapeY;
-    if(iv.sign==='+') s += `<path d="M ${cx-w/2} ${cy-h/2} Q ${cx} ${cy+h*1.1} ${cx+w/2} ${cy-h/2}" stroke="${up}" stroke-width="2" fill="none"/>`;
-    else s += `<path d="M ${cx-w/2} ${cy+h/2} Q ${cx} ${cy-h*1.1} ${cx+w/2} ${cy+h/2}" stroke="${down}" stroke-width="2" fill="none"/>`;
+    if(iv.sign==='+') s += `<path d="M ${cx-w/2} ${cy-h/2} Q ${cx} ${cy+h*1.1} ${cx+w/2} ${cy-h/2}" stroke="${up}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
+    else s += `<path d="M ${cx-w/2} ${cy+h/2} Q ${cx} ${cy-h*1.1} ${cx+w/2} ${cy+h/2}" stroke="${down}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`;
   });
   // marqueurs de points d'inflexion (colonnes internes, hors ruptures)
   cols.forEach((c,i)=>{
@@ -1334,9 +1400,13 @@ function buildToolbar(){
     const gEl = document.createElement('div'); gEl.className='tool-group';
     group.items.forEach(([icon,label,id])=>{
       const b = document.createElement('div'); b.className='tool-btn'; b.dataset.tool=id;
-      b.innerHTML = `${icon}<span class="tip">${label}</span>`;
+      // add a small help knob for each tool so the user can see steps / video
+      b.innerHTML = `${icon}<span class="tip">${label}</span><div class="help-dot" title="Aide">?</div>`;
       b.onclick = ()=> selectTool(id,label,b);
       gEl.appendChild(b);
+      // help dot handler
+      const helpDot = b.querySelector('.help-dot');
+      if(helpDot) helpDot.onclick = (ev)=>{ ev.stopPropagation(); showToolHelp(id, label); };
     });
     tb.appendChild(gEl);
   });
@@ -1353,9 +1423,8 @@ function activateTangentMode(){
   hoverPoint = null; hoveredAsymptote = null;
   mode = 'tangent';
   document.getElementById('modeLabel').textContent = 'Outil : Tangente';
-  document.getElementById('asymBtn')?.classList.add('active-toggle');
   document.getElementById('asymBtnHeader')?.classList.add('active-toggle');
-  showToast('Mode Tangente activé : la tangente suit le point du curseur');
+  showToast('Mode Tangente activé : la tangente suit la courbe de '+(f.expr||('f'+f.id))+' au fil du curseur');
   draw();
 }
 
@@ -1363,7 +1432,6 @@ function selectTool(id,label,el){
   document.querySelectorAll('.tool-btn').forEach(x=>x.classList.remove('active'));
   el.classList.add('active');
   document.getElementById('modeLabel').textContent = 'Outil : '+label;
-  document.getElementById('asymBtn')?.classList.toggle('active-toggle', id==='tangent');
   document.getElementById('asymBtnHeader')?.classList.toggle('active-toggle', id==='tangent');
   geomTemp = null; // reset multi-click state
   const actions = {
@@ -1507,7 +1575,7 @@ function drawIntersections(r){
     ctx.save();
     ctx.fillStyle = pt.color || css('--accent3');
     ctx.beginPath(); ctx.arc(p.sx, p.sy, 4.2, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ffffff'; ctx.font='11px '+css('--font-mono'); ctx.fillText(fmtNum(pt.x), p.sx+8, p.sy-4);
+    ctx.fillStyle = css('--ink'); ctx.font='11px '+css('--font-mono'); ctx.fillText(fmtNum(pt.x), p.sx+8, p.sy-4);
     ctx.fillStyle = css('--ink-dim'); ctx.font='11px '+css('--font-mono'); ctx.fillText(fmtNum(pt.y), p.sx+8, p.sy+10);
     ctx.restore();
   });
@@ -1778,7 +1846,6 @@ function toggleTangentMode(){
   if(active){
     mode = 'pan';
     document.getElementById('modeLabel').textContent = 'Outil : Déplacer';
-    document.getElementById('asymBtn')?.classList.remove('active-toggle');
     document.getElementById('asymBtnHeader')?.classList.remove('active-toggle');
     draw();
   } else {
@@ -1788,7 +1855,7 @@ function toggleTangentMode(){
 
 const asymBtn = document.getElementById('asymBtn');
 const asymBtnHeader = document.getElementById('asymBtnHeader');
-if(asymBtn) asymBtn.addEventListener('click', toggleTangentMode);
+if(asymBtn) asymBtn.addEventListener('click', analyzeAsymptotes);
 if(asymBtnHeader) asymBtnHeader.addEventListener('click', toggleTangentMode);
 document.getElementById('derivBtn').onclick = ()=>{
   const f = funcs.find(x=>x.id===activeFuncId);
@@ -1803,8 +1870,8 @@ document.getElementById('derivBtn').onclick = ()=>{
     block.innerHTML = `<h3>Dérivées — ${prettyMathInline(f.expr)}</h3>
       <div class="small"><b>f'(x):</b> ${prettyMathInline(d1)} <button class="btn" id="plotD1">Tracer f'</button></div>
       <div class="small" style="margin-top:6px;"><b>f''(x):</b> ${prettyMathInline(d2)} <button class="btn" id="plotD2">Tracer f''</button></div>`;
-    document.getElementById('plotD1').onclick = ()=>{ try{ const fn = compile(d1); funcs.push({id:idc++, expr: d1, fn, color: '#888888', visible:true}); renderFuncList(); draw(); }catch(e){ showToast('Erreur f\' : '+e.message); } };
-    document.getElementById('plotD2').onclick = ()=>{ try{ const fn = compile(d2); funcs.push({id:idc++, expr: d2, fn, color: '#bbbbbb', visible:true}); renderFuncList(); draw(); }catch(e){ showToast('Erreur f\'\' : '+e.message); } };
+    document.getElementById('plotD1').onclick = ()=>{ try{ const fn = compile(d1); funcs.push({id:idc++, expr: d1, fn, color: '#e91e8c', visible:true}); renderFuncList(); draw(); }catch(e){ showToast('Erreur f\' : '+e.message); } };
+    document.getElementById('plotD2').onclick = ()=>{ try{ const fn = compile(d2); funcs.push({id:idc++, expr: d2, fn, color: '#00acc1', visible:true}); renderFuncList(); draw(); }catch(e){ showToast('Erreur f\'\' : '+e.message); } };
   }catch(err){ showToast('Impossible de calculer la dérivée : '+err.message); }
 };
 document.getElementById('intCompute').onclick = ()=>{
@@ -2005,9 +2072,66 @@ function buildKeyboard(){
   });
 }
 
+// ---------- Tool help / demo modal ----------
+const TOOL_HELP = {
+  'pan': {title:'Déplacement / Pan', steps:['Cliquez pour activer le mode Pan.', 'Maintenez clique et glissez pour déplacer la vue.', 'Molette pour zoomer.'], video: 'https://www.youtube.com/results?search_query=pan+graph+tool'},
+  'tangent': {title:'Tangente', steps:['Sélectionnez une fonction.', 'Activez Tangente.', 'La tangente suit la courbe au curseur.'], video: 'https://www.youtube.com/results?search_query=draw+tangent+to+curve'},
+  'point': {title:'Placer un point', steps:['Activez l outil Point.', 'Cliquez sur le plan pour placer un point.'], video: 'https://www.youtube.com/results?search_query=place+point+graph'},
+  'line': {title:'Tracer une droite', steps:['Activez Droite.', 'Cliquez deux points pour définir la droite.'], video: 'https://www.youtube.com/results?search_query=draw+line+two+points'},
+  'asymptote-tool': {title:'Asymptotes', steps:['Sélectionnez une fonction.', 'Utilisez "Analyser les asymptotes" pour détecter.', 'Ou utilisez "Placer asymptote" puis cliquez sur la courbe.'], video: 'https://www.youtube.com/results?search_query=asymptote+graph+tutorial'},
+  'tv-tool': {title:'Tableau de variation', steps:['Sélectionnez la fonction.', 'Cliquez sur "Générer le TV".', 'Le tableau montre signes et variations sur le domaine choisi.'], video: 'https://www.youtube.com/results?search_query=tableau+de+variation+fonction'},
+  'integral': {title:'Intégrale / Primitive', steps:['Sélectionnez une fonction.', 'Cliquez intégrale puis choisissez a et b.', 'La zone et la valeur s affichent.'], video: 'https://www.youtube.com/results?search_query=integral+area+under+curve'},
+};
+
+function showToolHelp(id, label){
+  const meta = TOOL_HELP[id] || {title: label, steps: ['Activez l outil puis suivez les instructions affichées.'], video: 'https://www.youtube.com/results?search_query='+encodeURIComponent(label+' outil')};
+  document.getElementById('helpTitle').textContent = meta.title || label;
+  const body = document.getElementById('helpBody');
+  body.innerHTML = '';
+  const ul = document.createElement('ol'); ul.style.margin='6px 0 0 18px'; meta.steps.forEach(s=>{ const li=document.createElement('li'); li.textContent=s; ul.appendChild(li); });
+  body.appendChild(ul);
+  const link = document.getElementById('helpVideoLink'); link.href = meta.video; link.textContent = 'Voir une démonstration (YouTube)';
+  document.getElementById('helpModal').style.display='block';
+}
+document.getElementById('helpClose').onclick = ()=>{ document.getElementById('helpModal').style.display='none'; };
+
+// ---------- Scientific calculator ----------
+function buildCalculator(){
+  const btns = ['7','8','9','/','sin(','cos(','tan(','pi',
+                '4','5','6','*','asin(','acos(','atan(','e',
+                '1','2','3','-','^','sqrt(', 'ln(', '(',
+                '0','.','=','+','%','abs(',')','!'];
+  const container = document.getElementById('calcButtons');
+  btns.forEach(t=>{
+    const b = document.createElement('button'); b.type='button'; b.textContent=t; b.dataset.val=t;
+    b.onclick = ()=>{
+      const inp = document.getElementById('calcDisplay');
+      if(t==='='){ document.getElementById('calcEval').click(); return; }
+      inp.value = inp.value + t;
+      inp.focus();
+    };
+    container.appendChild(b);
+  });
+  document.getElementById('calcEval').onclick = ()=>{
+    const inp = document.getElementById('calcDisplay');
+    const expr = inp.value.trim();
+    if(!expr) return;
+    try{ const val = math.evaluate(expr); const h = document.getElementById('calcHistory');
+      const row = document.createElement('div'); row.textContent = expr + ' = ' + val; row.style.padding='6px 0'; h.prepend(row); inp.value = String(val);
+    }catch(err){ showToast('Erreur calcul: '+err.message); }
+  };
+  document.getElementById('calcClear').onclick = ()=>{ document.getElementById('calcDisplay').value=''; };
+  document.getElementById('calcInsertExpr').onclick = ()=>{
+    const val = document.getElementById('calcDisplay').value; if(!val) return; const input = document.getElementById('exprInput'); const start = input.selectionStart || input.value.length; input.value = input.value.slice(0,start) + val + input.value.slice(start); input.focus(); };
+  // open/close handlers
+  document.getElementById('calcBtn').onclick = (e)=>{ e.stopPropagation(); const el=document.getElementById('sciCalc'); el.style.display = el.style.display==='none'?'block':'none'; };
+  document.getElementById('closeCalc').onclick = ()=>{ document.getElementById('sciCalc').style.display='none'; };
+  document.getElementById('calcBackdrop').onclick = ()=>{ document.getElementById('sciCalc').style.display='none'; };
+}
 function init(){
   buildToolbar();
   buildKeyboard();
+  buildCalculator();
   resize();
   addFunction('x^2');
 }
