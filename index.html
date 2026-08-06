@@ -25,6 +25,7 @@
     --grid-minor:rgba(255,255,255,.08); --grid-major:rgba(255,255,255,.14); --grid-cm:rgba(255,255,255,.20);
     --accent:#f59e0b; --accent2:#ff7a59; --accent3:#7c9cff; --accent4:#2bb9d8;
     --danger:#ff6b7a; --asymptote:#c53030; --danger-light:#ffb3b8; --paper:#0b1220;
+    --sign-pos:#22c55e; --sign-neg:#ef4444;
     --panel-glass:rgba(15,23,41,.93); --overlay-bg:rgba(2,6,23,.62);
     --btn-bg:rgba(255,255,255,.06); --btn-border:rgba(255,255,255,.10); --btn-hover:rgba(255,255,255,.12);
     --shadow:0 16px 38px rgba(2,6,23,.34);
@@ -38,6 +39,7 @@
     --grid-minor:rgba(0,0,0,.08); --grid-major:rgba(0,0,0,.14); --grid-cm:rgba(0,0,0,.20);
     --accent:#0f766e; --accent2:#2563eb; --accent3:#7c3aed; --accent4:#0ea5e9;
     --danger:#dc2626; --paper:#f2f7ff;
+    --sign-pos:#16a34a; --sign-neg:#dc2626;
     --panel-glass:rgba(255,255,255,.95); --overlay-bg:rgba(15,23,42,.16);
     --btn-bg:rgba(15,23,42,.04); --btn-border:rgba(15,23,42,.08); --btn-hover:rgba(15,23,42,.08);
     --shadow:0 12px 28px rgba(15,23,42,.08);
@@ -469,6 +471,51 @@ function safeEval(fn,x){
 function deriv(fn,x,h=1e-4){ return (safeEval(fn,x+h)-safeEval(fn,x-h))/(2*h); }
 function deriv2(fn,x,h=1e-3){ return (safeEval(fn,x+h)-2*safeEval(fn,x)+safeEval(fn,x-h))/(h*h); }
 
+// ---------- Dérivées symboliques EXACTES (mathjs) — remplace le bruit numérique ----------
+// La différence finie centrée (h=1e-4) donnait des signes faux ou instables près des
+// points critiques, ruptures et zones plates. On calcule maintenant f'(x) et f''(x)
+// de façon littérale (arbre symbolique), une seule fois par fonction, puis on évalue
+// cette expression exacte — plus aucune approximation numérique dans le signe.
+function normalizeForMathjs(expr){
+  let e = expr.trim();
+  if (/^y\s*=/i.test(e)) e = e.replace(/^y\s*=/i,'');
+  if (/^f\s*\(\s*x\s*\)\s*=/i.test(e)) e = e.replace(/^f\s*\(\s*x\s*\)\s*=/i,'');
+  e = e.replace(/√/g,'sqrt').replace(/×/g,'*').replace(/÷/g,'/')
+       .replace(/²/g,'^2').replace(/³/g,'^3');
+  // Notre moteur maison définit ln = logarithme népérien et log = logarithme base 10,
+  // ce qui est l'INVERSE de la convention mathjs (log = népérien par défaut). On
+  // reformate donc l'expression pour que mathjs calcule la dérivée du BON logarithme.
+  e = e.replace(/\bln\s*\(/g, '__LN__(');
+  e = e.replace(/\blog\s*\(/g, 'log10(');
+  e = e.replace(/__LN__\(/g, 'log(');
+  return e;
+}
+
+function getDerivFns(f){
+  if(f._d1fn && f._d1src === f.expr) return { d1: f._d1fn, d2: f._d2fn, exact: f._dexact };
+  let d1, d2, exact = true;
+  try{
+    const e = normalizeForMathjs(f.expr);
+    const node1 = math.derivative(e, 'x');
+    const node2 = math.derivative(node1, 'x');
+    const c1 = node1.compile(), c2 = node2.compile();
+    d1 = (x)=>{ try{ const v = c1.evaluate({x}); return (typeof v==='number' && isFinite(v)) ? v : NaN; }catch(err){ return NaN; } };
+    d2 = (x)=>{ try{ const v = c2.evaluate({x}); return (typeof v==='number' && isFinite(v)) ? v : NaN; }catch(err){ return NaN; } };
+    f._d1expr = node1.toString(); f._d2expr = node2.toString();
+  }catch(err){
+    // Repli : dérivée numérique, uniquement si l'expression n'est pas supportée par mathjs
+    // (ex: fonction 'root' maison). Rare, mais on ne casse jamais le tracé.
+    d1 = (x)=>deriv(f.fn, x);
+    d2 = (x)=>deriv2(f.fn, x);
+    exact = false;
+  }
+  f._d1fn = d1; f._d2fn = d2; f._d1src = f.expr; f._dexact = exact;
+  return { d1, d2, exact };
+}
+// Adaptateurs conservant la signature (fn, x) attendue par buildSignSegments/buildConcavitySVG etc.
+function exactDerivSignal(f){ const {d1} = getDerivFns(f); return (_fn, x)=>d1(x); }
+function exactDeriv2Signal(f){ const {d2} = getDerivFns(f); return (_fn, x)=>d2(x); }
+
 // ---------- Functions store ----------
 const palette = ['#3fb8af','#e8935a','#c77dd0','#6d8ef2','#e2626b','#8bc34a','#f0c419'];
 let funcs = []; // {id, expr, fn, color, visible}
@@ -762,7 +809,8 @@ function drawLiveTangent(r){
   const wx = s2w(hoverScreen.sx, 0).x;
   const y = safeEval(f.fn, wx);
   if(isNaN(y)) return;
-  const m = deriv(f.fn, wx);
+  const { d1 } = getDerivFns(f);
+  const m = d1(wx);
   if(!isFinite(m)) return;
   const x1 = s2w(0,0).x, x2 = s2w(r.width,0).x;
   const y1 = y + m*(x1-wx), y2 = y + m*(x2-wx);
@@ -1135,7 +1183,7 @@ function generateTV(){
   const DMIN = isTrig ? -Math.PI : -15;
   const DMAX = isTrig ? Math.PI : 15;
   const breaks = asymData.vertical.map(v=>v.x);
-  const segments = buildSignSegments(f, deriv, DMIN, DMAX, breaks);
+  const segments = buildSignSegments(f, exactDerivSignal(f), DMIN, DMAX, breaks);
   // find horizontales for this function and pass to renderer
   const horiz = asymData.horizontal.filter(h=>h.funcId===f.id).map(h=>h.value);
   const svg = buildVariationSVG(segments, horiz);
@@ -1181,7 +1229,7 @@ function buildVariationSVG(segments, asymHoriz=[]){
     const shift = desiredCenter - colX[zeroIndex];
     viewBoxX = -shift;
   }
-  const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--asymptote)';
+  const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--sign-pos)', down='var(--sign-neg)';
   let s = `<svg viewBox="${viewBoxX} 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
   // bandes de fond colorées derrière chaque intervalle de signe (croissant/décroissant)
@@ -1279,11 +1327,11 @@ function analyzeConcavity(){
   const DMIN = isTrig ? -Math.PI : -15;
   const DMAX = isTrig ? Math.PI : 15;
   const breaks = asymData.vertical.map(v=>v.x);
-  const segments = buildSignSegments(f, deriv2, DMIN, DMAX, breaks);
+  const segments = buildSignSegments(f, exactDeriv2Signal(f), DMIN, DMAX, breaks);
 
   inflectionMarkers = [];
   funcs.filter(x=>x.visible).forEach(func=>{
-    const segs = buildSignSegments(func, deriv2, DMIN, DMAX, breaks);
+    const segs = buildSignSegments(func, exactDeriv2Signal(func), DMIN, DMAX, breaks);
     segs.forEach(seg=>{
       seg.points.forEach((p,i)=>{ if(i>0 && i<seg.points.length-1) inflectionMarkers.push({type:'point', x:p.x, y:p.y, color: func.color || css('--accent4')}); });
     });
@@ -1309,7 +1357,7 @@ function buildConcavitySVG(segments){
   for(let i=0;i<intervals.length;i++) colX.push(colX[i] + (intervals[i].gap ? gapW : colW));
   const width = colX[colX.length-1] + padR;
 
-  const stroke='var(--ink)', dim='var(--ink-dim)', up='var(--accent)', down='var(--danger)';
+  const stroke='var(--ink)', dim='var(--ink-dim)', up='var(--sign-pos)', down='var(--sign-neg)';
   let s = `<svg viewBox="0 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
   s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
   // bandes de fond colorées (convexe / concave)
@@ -1519,20 +1567,21 @@ function findRoots(){
 function findExtrema(){
   const f = funcs.find(f=>f.id===activeFuncId);
   if(!f){ showToast('Sélectionnez une fonction'); return; }
+  const {d1} = getDerivFns(f);
   let found=0;
   for(let x=-15;x<=15;x+=0.005){
-    const d = deriv(f.fn, x);
+    const d = d1(x);
     if(isNaN(d)) continue;
-    const d2 = deriv(f.fn, x+0.005);
+    const d2 = d1(x+0.005);
     if(d*d2<0){
       let lo=x, hi=x+0.005;
-      for(let i=0;i<20;i++){ const mid=(lo+hi)/2; if(deriv(f.fn,lo)*deriv(f.fn,mid)<=0) hi=mid; else lo=mid; }
+      for(let i=0;i<20;i++){ const mid=(lo+hi)/2; if(d1(lo)*d1(mid)<=0) hi=mid; else lo=mid; }
       const ex=(lo+hi)/2, ey=safeEval(f.fn,ex);
       if(isFinite(ey)){ geomObjects.push({type:'point', x:ex, y:ey, color:css('--accent3')}); found++; }
       x+=0.1;
     }
   }
-  showToast(`${found} extremum(s) trouvé(s)`);
+  showToast(`${found} extremum(s) trouvé(s) — dérivée exacte`);
   draw();
 }
 
