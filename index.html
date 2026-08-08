@@ -1023,13 +1023,11 @@ function drawAsymptoteOverlay(r){
     ctx.strokeStyle = asymColor;
     const contact = asymptoteContactPoint(item, r);
     if(item.type==='vertical'){
-      ctx.beginPath(); ctx.moveTo(contact.sx,0); ctx.lineTo(contact.sx,r.height); ctx.lineWidth = 3.6; ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(contact.sx+5,0); ctx.lineTo(contact.sx+5,r.height); ctx.lineWidth = 3.6; ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(contact.sx,0); ctx.lineTo(contact.sx,r.height); ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = asymColor; ctx.font = '12px ' + css('--font-mono');
       ctx.fillText(`x = ${fmtNum(item.x)}`, contact.sx + 10, 18);
     } else if(item.type==='horizontal'){
-      ctx.beginPath(); ctx.moveTo(0,contact.sy); ctx.lineTo(r.width,contact.sy); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(0,contact.sy+4); ctx.lineTo(r.width,contact.sy+4); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0,contact.sy); ctx.lineTo(r.width,contact.sy); ctx.lineWidth = 2; ctx.stroke();
       ctx.fillStyle = asymColor; ctx.font = '11px ' + css('--font-mono');
       ctx.fillText(`y = ${fmtNum(item.y)}`, 12, contact.sy - 8);
     } else if(item.type==='oblique'){
@@ -2225,10 +2223,5 @@ if (document.readyState === 'loading') {
   init();
 }
 </script>
-<script src="limits.js"></script>
-  <script src="mathAI.js"></script>
-  
-  <script src="plotter.js"></script>
-  <script src="script.js"></script>
 </body>
 </html>
