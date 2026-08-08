@@ -1182,21 +1182,44 @@ function generateTV(){
   const isTrig = /\b(sin|cos|tan|asin|acos|atan)\b/i.test(f.expr);
   const DMIN = isTrig ? -Math.PI : -15;
   const DMAX = isTrig ? Math.PI : 15;
+  analyzeAsymptotes(); // toujours à jour avant de construire le tableau (verticales/horizontales/obliques)
   const breaks = asymData.vertical.map(v=>v.x);
   const segments = buildSignSegments(f, exactDerivSignal(f), DMIN, DMAX, breaks);
   // find horizontales for this function and pass to renderer
   const horiz = asymData.horizontal.filter(h=>h.funcId===f.id).map(h=>h.value);
+  const obliq = asymData.oblique.filter(o=>o.funcId===f.id);
   const svg = buildVariationSVG(segments, horiz);
+  const asymParts = [];
+  if(breaks.length) asymParts.push(breaks.map(b=>`x = ${fmtNum(b)}`).join(', ') + ' (verticale' + (breaks.length>1?'s':'') + ')');
+  if(horiz.length) asymParts.push(horiz.map(h=>`y = ${fmtNum(h)}`).join(', ') + ' (horizontale' + (horiz.length>1?'s':'') + ')');
+  const asymLine = asymParts.length ? `<div style="margin-top:8px;color:#d32f2f;font-weight:700;font-size:13px;">Asymptote(s) : ${asymParts.join(' et ')}.</div>` : '';
+  const obliqLine = obliq.length ? `<div style="margin-top:4px;color:#d32f2f;font-weight:700;font-size:13px;">` +
+    obliq.map(o=>{
+      const side = o.sign>0 ? '+∞' : '−∞';
+      const bTxt = o.b>=0 ? ('+ '+fmtNum(o.b)) : ('− '+fmtNum(Math.abs(o.b)));
+      return `Asymptote oblique en ${side} : y = ${fmtNum(o.a)}x ${bTxt} &nbsp;(lim [f(x) − (${fmtNum(o.a)}x ${bTxt})] = 0 quand x → ${side})`;
+    }).join('<br>') + `</div>` : '';
   document.getElementById('tvInfo').innerHTML =
-    `<div class="real-table-wrap">${svg}</div>` +
+    `<div class="real-table-wrap" style="background:#fff;border-radius:10px;padding:6px;overflow-x:auto;">${svg}</div>` +
+    asymLine + obliqLine +
     `<div class="small" style="margin-top:6px;">f(x) = ${f.expr} — domaine étudié : [${DMIN}, ${DMAX}]${breaks.length?', rupture(s) en x = '+breaks.map(fmtNum).join(', '):''}.</div>`;
 }
 
-function buildVariationSVG(segments, asymHoriz=[]){
-  const colW=88, gapW=54, padL=64, padR=26;
-  const rowXY=28, signY=78, fTop=110, unit=42;
+// ---------- Tableau de variation — rendu "copie de Bac" (grille noire, style académique) ----------
+// Palette FIXE (indépendante du thème clair/sombre du site) : fond blanc, grille et texte
+// noirs, flèches bleues, ruptures/asymptotes en rouge pointillé — comme une copie d'examen.
+const TV_STYLE = {
+  bg:'#ffffff', grid:'#1a1a1a', text:'#111111', arrow:'#1d4ed8', asym:'#d32f2f'
+};
 
-  // colonnes à plat + intervalles (signe ou rupture) + niveaux verticaux relatifs
+function buildVariationSVG(segments, asymHoriz=[]){
+  const C = TV_STYLE;
+  const leftW = 66;              // colonne des libellés x / f'(x) / f(x)
+  const colW = 96, gapW = 74;    // largeur d'un intervalle normal / d'une colonne de rupture
+  const padL = leftW + 18, padR = 22;
+  const rowXH = 40, signRowH = 48, unit = 44;
+
+  // ---- colonnes à plat + intervalles (signe ou rupture) + niveaux verticaux relatifs ----
   const cols=[], intervals=[], levels=[];
   segments.forEach((seg,si)=>{
     let level=0;
@@ -1212,110 +1235,121 @@ function buildVariationSVG(segments, asymHoriz=[]){
   });
 
   const minLv=Math.min(...levels), maxLv=Math.max(...levels), range=(maxLv-minLv)||1;
-  const y0f = lv => fTop + (lv-minLv)*unit;
-  const svgH = fTop + range*unit + 34;
+  const rowXBottom = rowXH, signBottom = rowXBottom + signRowH;
+  const y0f = lv => signBottom + 32 + (lv-minLv)*unit;
+  const fBottom = signBottom + 32 + range*unit + 30;
 
   // positions x
   const colX=[padL];
   for(let i=0;i<intervals.length;i++) colX.push(colX[i] + (intervals[i].gap ? gapW : colW));
   const width = colX[colX.length-1] + padR;
-  const ruleY = rowXY + 18;
+  const height = fBottom;
 
-  // try to center the column labeled '0' if present
-  let zeroIndex = -1; cols.forEach((c,i)=>{ if(c.label && c.label.toString().trim().startsWith('0')) zeroIndex = i; });
-  let viewBoxX = 0;
-  if(zeroIndex >= 0){
-    const desiredCenter = Math.round((width)/2);
-    const shift = desiredCenter - colX[zeroIndex];
-    viewBoxX = -shift;
-  }
-  const stroke = 'var(--ink)', dim='var(--ink-dim)', up='var(--sign-pos)', down='var(--sign-neg)';
-  let s = `<svg viewBox="${viewBoxX} 0 ${width} ${svgH}" width="${width}" height="${svgH}" xmlns="http://www.w3.org/2000/svg" font-family="var(--font-mono)">`;
-  s += `<rect x="0" y="0" width="${width}" height="${svgH}" rx="14" fill="var(--panel2)" stroke="var(--line)"/>`;
-  // bandes de fond colorées derrière chaque intervalle de signe (croissant/décroissant)
-  intervals.forEach((iv,i)=>{
-    if(iv.gap) return;
-    const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
-    s += `<rect x="${colX[i]}" y="${ruleY+2}" width="${colX[i+1]-colX[i]}" height="${fTop+range*unit+12-(ruleY+2)}" fill="${col}" opacity="0.07"/>`;
-  });
-  s += `<line x1="${padL-14}" y1="${ruleY}" x2="${width-padR+14}" y2="${ruleY}" stroke="${stroke}" stroke-width="1"/>`;
-
-  // ligne de titres (colonne gauche)
-  s += svgTextElement(16, rowXY+4, 'x', {fontSize:12, fill:dim, anchor:'start'});
-  s += svgTextElement(16, signY+4, "f'(x)", {fontSize:12, fill:dim, anchor:'start'});
-  s += svgTextElement(16, (fTop+y0f(levels[0]))/2+4, 'f(x)', {fontSize:12, fill:dim, anchor:'start'});
-
-  // no horizontal separators per user preference — only vertical rupture bars
-
-  // valeurs de x
-  cols.forEach((c,i)=>{
-    s += svgTextElement(colX[i], rowXY, c.label, {fontSize:13, fill:stroke, anchor:'middle'});
-  });
-
-  // ligne de signe (f') + zéros aux points critiques (colonnes internes qui ne sont pas des ruptures)
-  intervals.forEach((iv,i)=>{
-    const xL=colX[i], xR=colX[i+1], xm=(xL+xR)/2;
-    if(iv.gap){
-      // double vertical asymptote marker (light red) for each rupture
-      s += `<line x1="${xm-6}" y1="${ruleY+2}" x2="${xm-6}" y2="${fTop+range*unit+14}" stroke="${down}" stroke-width="2.8" stroke-linecap="round"/>`;
-      s += `<line x1="${xm+6}" y1="${ruleY+2}" x2="${xm+6}" y2="${fTop+range*unit+14}" stroke="${down}" stroke-width="2.8" stroke-linecap="round"/>`;
-    } else {
-      // short colored stroke representing sign of f'
-      const col = iv.sign==='+' ? up : (iv.sign==='−' ? down : dim);
-      const lx = xm-12, rx = xm+12, y = signY-2;
-      s += `<line x1="${lx}" y1="${y}" x2="${rx}" y2="${y}" stroke="${col}" stroke-width="3" stroke-linecap="round"/>`;
-    }
-  });
-  cols.forEach((c,i)=>{
-    if(i>0 && i<cols.length-1 && !(intervals[i-1] && intervals[i-1].gap) && !(intervals[i] && intervals[i].gap)){
-      // small zero marker for critical point
-      s += `<circle cx="${colX[i]}" cy="${signY-5}" r="3.4" fill="${stroke}"/>`;
-    }
-  });
-
-  // concavity row removed per user request
-
-  // courbe de variation (flèches obliques) + valeurs
-  cols.forEach((c,i)=>{
-    const cy = y0f(levels[i]);
-    const isEdge = (i===0) || (i===cols.length-1);
+  // fusionner les libellés "a⁻" / "a⁺" de part et d'autre d'une rupture en un seul "a" au centre
+  const xLabels = [];
+  for(let i=0;i<cols.length;i++){
     const gapBefore = i>0 && intervals[i-1] && intervals[i-1].gap;
     const gapAfter  = i<cols.length-1 && intervals[i] && intervals[i].gap;
-    if(!gapBefore && !gapAfter && !isEdge){
-      s += `<circle cx="${colX[i]}" cy="${cy}" r="3" fill="${stroke}"/>`;
+    if(gapBefore) continue; // déjà fusionné avec la colonne précédente
+    if(gapAfter){
+      xLabels.push({ x:(colX[i]+colX[i+1])/2, label:(cols[i].label||'').toString().replace(/[⁻⁺]/g,'') });
+    } else {
+      xLabels.push({ x:colX[i], label:cols[i].label });
     }
+  }
+  const gapMids = [];
+  for(let i=0;i<intervals.length;i++) if(intervals[i].gap) gapMids.push((colX[i]+colX[i+1])/2);
+
+  let s = `<svg viewBox="0 0 ${width} ${height}" width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg" font-family="'Iowan Old Style','Palatino Linotype',Georgia,serif">`;
+  s += `<rect x="0.5" y="0.5" width="${width-1}" height="${height-1}" fill="${C.bg}" stroke="${C.grid}" stroke-width="1.4"/>`;
+  // séparateur colonne des libellés
+  s += `<line x1="${leftW}" y1="0" x2="${leftW}" y2="${height}" stroke="${C.grid}" stroke-width="1.1"/>`;
+  // séparateurs horizontaux x / f' / f
+  s += `<line x1="0" y1="${rowXBottom}" x2="${width}" y2="${rowXBottom}" stroke="${C.grid}" stroke-width="1.1"/>`;
+  s += `<line x1="0" y1="${signBottom}" x2="${width}" y2="${signBottom}" stroke="${C.grid}" stroke-width="1.1"/>`;
+
+  // libellés de ligne (italiques, façon manuel)
+  s += `<text x="${leftW/2}" y="${rowXH/2+5}" font-size="14" font-style="italic" fill="${C.text}" text-anchor="middle">x</text>`;
+  s += `<text x="${leftW/2}" y="${rowXBottom+signRowH/2+5}" font-size="14" font-style="italic" fill="${C.text}" text-anchor="middle">f'(x)</text>`;
+  s += `<text x="${leftW/2}" y="${(signBottom+height)/2+5}" font-size="14" font-style="italic" fill="${C.text}" text-anchor="middle">f(x)</text>`;
+
+  // valeurs de x (fusionnées aux ruptures)
+  xLabels.forEach(c=>{
+    s += `<text x="${c.x}" y="${rowXH/2+5}" font-size="14" fill="${C.text}" text-anchor="middle">${prettyMathInline(c.label)}</text>`;
+  });
+
+  // ligne de signe f'(x) : "+" / "−" par intervalle, "0" aux points critiques internes
+  const signY = rowXBottom + signRowH/2 + 6;
+  intervals.forEach((iv,i)=>{
+    if(iv.gap) return;
+    const xm=(colX[i]+colX[i+1])/2;
+    s += `<text x="${xm}" y="${signY}" font-size="17" font-weight="700" fill="${C.text}" text-anchor="middle">${iv.sign==='+'?'+':(iv.sign==='−'?'−':'0')}</text>`;
+  });
+  cols.forEach((c,i)=>{
+    const gapBefore = i>0 && intervals[i-1] && intervals[i-1].gap;
+    const gapAfter  = i<cols.length-1 && intervals[i] && intervals[i].gap;
+    if(i>0 && i<cols.length-1 && !gapBefore && !gapAfter){
+      s += `<text x="${colX[i]}" y="${signY}" font-size="15" font-weight="700" fill="${C.text}" text-anchor="middle">0</text>`;
+    }
+  });
+
+  // courbe de variation (flèches obliques) + valeurs
+  // Aux bords du domaine (−∞ / +∞), si une asymptote horizontale existe, on affiche sa
+  // valeur EXACTE (avec un exposant ⁻/⁺ selon le sens d'approche) plutôt que la valeur
+  // décimale échantillonnée à x=±15 — conforme à l'écriture d'une vraie limite.
+  function edgeLabel(y, isEdge){
+    if(isEdge && Array.isArray(asymHoriz) && asymHoriz.length && isFinite(y)){
+      let best=null, bestDiff=Infinity;
+      asymHoriz.forEach(v=>{ const d=Math.abs(y-v); if(d<bestDiff){ bestDiff=d; best=v; } });
+      if(best!==null && bestDiff < Math.max(0.5, Math.abs(best)*0.25)){
+        const dir = Math.abs(y-best) < 1e-6 ? '' : (y>best ? '⁺' : '⁻');
+        return fmtNum(best)+dir;
+      }
+    }
+    return fmtValueLabel(y);
+  }
+  cols.forEach((c,i)=>{
+    const cy = y0f(levels[i]);
     const above = (i>0 ? levels[i]<=levels[i-1] : (i<cols.length-1 && levels[i]<=levels[i+1]));
-    const labelY = above ? cy-9 : cy+16;
-    const valLabel = fmtValueLabel(c.y);
+    const labelY = above ? cy-10 : cy+18;
+    const isDomainEdge = (i===0 || i===cols.length-1);
+    const valLabel = edgeLabel(c.y, isDomainEdge);
     const isInf = valLabel==='+∞' || valLabel==='−∞';
-    s += `<text x="${colX[i]}" y="${labelY}" font-size="${isInf?14:12}" font-weight="${isInf?700:400}" fill="${isInf?dim:stroke}" text-anchor="middle">${valLabel}</text>`;
+    s += `<text x="${colX[i]}" y="${labelY}" font-size="${isInf?15:13}" font-weight="${isInf?700:400}" fill="${C.text}" text-anchor="middle">${valLabel}</text>`;
   });
   for(let i=0;i<intervals.length;i++){
     if(intervals[i].gap) continue;
     const x1=colX[i], y1=y0f(levels[i]), x2=colX[i+1], y2=y0f(levels[i+1]);
-    // white slope line for f(x) and arrowheads
-    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${up}" stroke-width="2.6" stroke-linecap="round"/>`;
+    s += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${C.arrow}" stroke-width="2.2" stroke-linecap="round"/>`;
     const ang = Math.atan2(y2-y1, x2-x1);
     const ah = 9;
-    const ax1 = x2; const ay1 = y2;
-    const ax2 = x2-ah*Math.cos(ang-0.45); const ay2 = y2-ah*Math.sin(ang-0.45);
-    const ax3 = x2-ah*Math.cos(ang+0.45); const ay3 = y2-ah*Math.sin(ang+0.45);
-    s += `<polygon points="${ax1},${ay1} ${ax2},${ay2} ${ax3},${ay3}" fill="${up}"/>`;
+    const ax2 = x2-ah*Math.cos(ang-0.42); const ay2 = y2-ah*Math.sin(ang-0.42);
+    const ax3 = x2-ah*Math.cos(ang+0.42); const ay3 = y2-ah*Math.sin(ang+0.42);
+    s += `<polygon points="${x2},${y2} ${ax2},${ay2} ${ax3},${ay3}" fill="${C.arrow}"/>`;
   }
-  s += '</svg>';
-  // If there are horizontal asymptotes for this function, add parallel horizontal markers
+
+  // ruptures : un unique trait rouge pointillé traversant f'(x) et f(x) (pas la ligne x)
+  gapMids.forEach(xm=>{
+    s += `<line x1="${xm}" y1="${rowXBottom}" x2="${xm}" y2="${height}" stroke="${C.asym}" stroke-width="1.6" stroke-dasharray="5 4"/>`;
+  });
+
+  // asymptotes horizontales : court trait rouge pointillé au niveau de la valeur, vers le bord le plus proche
   if(Array.isArray(asymHoriz) && asymHoriz.length){
-    // insert additional small SVG overlay lines near the f(x) band with labels
-    const extra = [];
-    asymHoriz.forEach((yv, idx)=>{
-      const py = fTop + 8 + (idx * 12);
-      extra.push(`<line x1="8" y1="${py}" x2="${width-8}" y2="${py}" stroke="var(--accent3)" stroke-width="2" stroke-dasharray="6 4"/>`);
-      extra.push(`<line x1="8" y1="${py+6}" x2="${width-8}" y2="${py+6}" stroke="var(--accent3)" stroke-width="2" stroke-dasharray="6 4"/>`);
-      extra.push(`<text x="${width-8}" y="${py-2}" font-size="12" fill="var(--ink)" text-anchor="end">y = ${fmtNum(yv)} (asymptote)</text>`);
+    cols.forEach((c,i)=>{
+      if(!isFinite(c.y)) return;
+      const isDomainEdge = (i===0 || i===cols.length-1);
+      if(!isDomainEdge) return; // les asymptotes horizontales ne concernent que les bords ±∞
+      const matches = asymHoriz.some(v=>Math.abs(c.y-v) < Math.max(0.5, Math.abs(v)*0.25));
+      if(!matches) return;
+      const cy = y0f(levels[i]);
+      const towardLeft = colX[i] < width/2;
+      const x1 = towardLeft ? Math.max(leftW+4, colX[i]-colW*0.7) : colX[i];
+      const x2 = towardLeft ? colX[i] : Math.min(width-6, colX[i]+colW*0.7);
+      s += `<line x1="${x1}" y1="${cy}" x2="${x2}" y2="${cy}" stroke="${C.asym}" stroke-width="1.6" stroke-dasharray="5 4"/>`;
     });
-    // inject before closing svg tag
-    s = s.replace('</svg>', extra.join('') + '</svg>');
   }
+
+  s += '</svg>';
   return s;
 }
 
@@ -1326,6 +1360,7 @@ function analyzeConcavity(){
   const isTrig = /\b(sin|cos|tan|asin|acos|atan)\b/i.test(f.expr);
   const DMIN = isTrig ? -Math.PI : -15;
   const DMAX = isTrig ? Math.PI : 15;
+  analyzeAsymptotes();
   const breaks = asymData.vertical.map(v=>v.x);
   const segments = buildSignSegments(f, exactDeriv2Signal(f), DMIN, DMAX, breaks);
 

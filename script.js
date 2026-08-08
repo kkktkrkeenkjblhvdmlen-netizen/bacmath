@@ -705,3 +705,35 @@ function initialize() {
 
 initialize();
 <button class="btn" id="asymBtnHeader">➙ Tangente</button>
+// Exemple pour une fonction définie sur ]0, +∞[ (ex: f(x) = x * ln(x))
+const expr = "x * log(x)";
+
+// 1. Limite en 0 par la droite (0+)
+const limZero = LimitEngine.computeLimit(expr, 0, "right"); 
+// Résultat exact : "0"
+
+// 2. Limite en +∞
+const limInf = LimitEngine.computeLimit(expr, "+inf"); 
+// Résultat exact : "+∞"
+
+// 3. Valeur exacte pour x = 1/5
+const valPoint = LimitEngine.computeLimit("1/5 * log(1/5)", 0.2); 
+// Résultat affiché : valeur/fraction propre sans 0.2 approximatif.
+// Remplacez les appels directs dans updateVariationTable par :
+function updateVariationTable() {
+  if (!variationBody) return;
+  const rawExpr = parseExpression();
+  if (!rawExpr) {
+    variationBody.innerHTML = '<tr><td colspan="5">Entrez une expression pour voir la table.</td></tr>';
+    return;
+  }
+
+  // Auto-correction par l'IA
+  const expr = MathAI.sanitize(rawExpr);
+
+  // Exemple d'obtention de la valeur exacte (ex: 1/5 au lieu de 0.2)
+  const fxExact = MathAI.formatExact(evaluateExpression(expr, x));
+  
+  // Limite exacte en 0 par la droite pour les domaines ]0, +∞[
+  const limZero = MathAI.computeLimit(expr, 0, "right");
+}
